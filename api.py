@@ -11,12 +11,14 @@ import utils
 import random
 import sys
 
-from vk_api import VkApi
+from vk_api.longpoll import VkLongPoll, VkEventType
+from vk_api import VkApi, longpoll
 from vk_api.utils import get_random_id
 
+
 vk_session = VkApi(token = config.VKTOKEN)
-
-
+longpoll = VkLongPoll(vk_session)
+vks = vk_session
 vk = vk_session.get_api()
 print("VK Announce Start!")
 
@@ -92,7 +94,10 @@ class DurakClient:
             logger.info(f"[{self._type.upper()}] Solving captcha...")
             if config.HUMAN_CAPTCHA_SOLVE:
                 vk.messages.send(user_id=config.VK_USER_ID, message=f"Пройдите капчу! {url}", random_id=get_random_id())
-                captcha = input("Answer: ")
+                for event in longpoll.listen():
+                    if event.type == VkEventType.MESSAGE_NEW and event.text.lower()[:8] == "!captcha":
+                        captcha = event.text.lower()[8:].split()[0]
+                        break
                 # vk.messages.send(user_id=config.VK_USER_ID, message='Успешно!', random_id=get_random_id())
             else:
                 answer = ImageCaptcha.ImageCaptcha(service_type="rucaptcha", rucaptcha_key=config.RUCAPTCHA_KEY).captcha_handler(captcha_link=url)
