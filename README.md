@@ -20,7 +20,8 @@
 ### Доработки от [knottty](https://github.com/knottty)
 Сделал чтение капчи через вк
 - !captcha - Ввести капчу 
-- Пример: ```!captcha 18361```
+
+### Пример: ```!captcha 18361```
 ![](https://media.discordapp.net/attachments/920332692325793844/931116597945450576/unknown.png)
 
 ### Запуск бота
