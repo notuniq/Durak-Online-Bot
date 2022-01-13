@@ -1,0 +1,7 @@
+matplotlib
+requests
+Pillow
+Faker
+python-rucaptcha
+loguru
+vk_api
