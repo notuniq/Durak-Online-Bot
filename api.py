@@ -10,11 +10,8 @@ import requests
 import utils
 import random
 import sys
-from PIL import Image
-import matplotlib.pyplot as plt
-import io
 
-from vk_api import VkApi, AuthError
+from vk_api import VkApi
 from vk_api.utils import get_random_id
 
 vk_session = VkApi(token = config.VKTOKEN)
@@ -95,11 +92,7 @@ class DurakClient:
             logger.info(f"[{self._type.upper()}] Solving captcha...")
             if config.HUMAN_CAPTCHA_SOLVE:
                 vk.messages.send(user_id=config.VK_USER_ID, message=f"Пройдите капчу! {url}", random_id=get_random_id())
-                r = requests.get(url)
-                plt.imshow(Image.open(io.BytesIO(r.content)))
-                plt.show(block=False)
                 captcha = input("Answer: ")
-                plt.close(1)
                 # vk.messages.send(user_id=config.VK_USER_ID, message='Успешно!', random_id=get_random_id())
             else:
                 answer = ImageCaptcha.ImageCaptcha(service_type="rucaptcha", rucaptcha_key=config.RUCAPTCHA_KEY).captcha_handler(captcha_link=url)
@@ -133,7 +126,7 @@ class DurakClient:
                 "id":captchaId,
                 })
         logger.info(f"[{self._type.upper()}] Bad captcha")
-        vk.messages.send(user_id=324644480, message='Bad captcha!', random_id=get_random_id())
+        vk.messages.send(user_id=config.VK_USER_ID, message='Bad captcha!', random_id=get_random_id())
         return ""
     
 
@@ -386,5 +379,3 @@ class DurakClient:
             data = self.sock.recv(4096).decode()
             logger.debug(data)
         logger.info(f"[{self._type.upper()}] Done")
-
-
