@@ -10,6 +10,7 @@ import requests
 import utils
 import random
 import sys
+from termcolor import colored
 
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api import VkApi, longpoll
@@ -20,10 +21,10 @@ vk_session = VkApi(token = config.VKTOKEN)
 longpoll = VkLongPoll(vk_session)
 vks = vk_session
 vk = vk_session.get_api()
-print("VK Announce Start!")
+print("LOGS: [INFO] VK Announce Start!")
 
 logger.remove()
-logger.add(sys.stderr, format="{time:HH:mm:ss.SSS}{message}", level=config.level)
+logger.add(sys.stderr, format="LOGS: {message}", level=config.level)
 
 servers = utils.getServers()
 
@@ -47,7 +48,7 @@ class DurakClient:
                 "p": 10,
                 "pl": "iphone",
                 "l": "ru",
-                "d": "iPhone8,4",
+                "d": "iPhone10,4",
                 "ios": "14.4",
                 "v": "1.9.1.2",
                 "n": "durak.ios",
@@ -73,7 +74,7 @@ class DurakClient:
         )
         data = self.sock.recv(4096).decode()
         logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Session verified")
+        logger.info(f"[{self._type.upper()}] Сессия работает")
     
     @logger.catch
     def register(self):
@@ -122,7 +123,7 @@ class DurakClient:
         data = utils.unMarshal(data)
         if data[0].get("command") == "set_token":
             token = data[0]["token"]
-            logger.info(f"[{self._type.upper()}] Account is ready(name={name}, token={token})")
+            logger.info(f"[{self._type.upper()}] Зарегистрирован аккаунт: {name}")
             return token
         if not config.HUMAN_CAPTCHA_SOLVE:
             r = requests.get("http://rucaptcha.com/res.php", params={
@@ -130,8 +131,8 @@ class DurakClient:
                 "action":"reportbad",
                 "id":captchaId,
                 })
-        logger.info(f"[{self._type.upper()}] Bad captcha")
-        vk.messages.send(user_id=config.VK_USER_ID, message='Bad captcha!', random_id=get_random_id())
+        logger.info(f"[{self._type.upper()}] Вы не смогли решить капчу :(")
+        vk.messages.send(user_id=config.VK_USER_ID, message=f"[{self._type.upper()}] Вы не смогли решить капчу :(", random_id=get_random_id())
         return ""
     
 
@@ -150,7 +151,7 @@ class DurakClient:
                 logger.debug(data.decode())
             except UnicodeDecodeError:
                 logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Auth is successful")
+        logger.info(f"[{self._type.upper()}] Авторизация прошла успешно")
     
 
     def createGame(self) -> int:
@@ -159,8 +160,8 @@ class DurakClient:
             utils.marshal(
                 {
                     "sw": False,
-                    "bet": 2500,
-                    "deck": 36,
+                    "bet": config.bet1,
+                    "deck": 24,
                     "password": pwd,
                     "players": 2,
                     "fast": False,
@@ -173,9 +174,10 @@ class DurakClient:
         for _ in range(2):
             data = self.sock.recv(4096).decode()
             logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Game has been created(pwd={pwd})")
+        logger.info(f"[{self._type.upper()}] Игра была создана")
         return pwd
-    
+        
+
 
     def sendFriendRequest(self):
         self.sock.sendall(
@@ -198,7 +200,7 @@ class DurakClient:
             ).encode()
         )
         data = self.sock.recv(4096).decode()
-        logger.info(f"[{self._type.upper()}] Sent friend request")
+        logger.info(f"[{self._type.upper()}] Запрос дружбы отправлен")
         logger.debug(data)
 
     
@@ -213,7 +215,7 @@ class DurakClient:
         )
         data = self.sock.recv(4096).decode()
         logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Invited to game")
+        logger.info(f"[{self._type.upper()}] Пригласил в игру")
     
 
     def ready(self):
@@ -228,7 +230,7 @@ class DurakClient:
             data = self.sock.recv(4096).decode()
             messages = utils.unMarshal(data)
             logger.debug(messages)'''
-        logger.info(f"[{self._type.upper()}] Ready")
+        logger.info(f"[{self._type.upper()}] Нажал Готов")
     
 
     def exit(self):
@@ -241,16 +243,20 @@ class DurakClient:
         )
         data = self.sock.recv(4096).decode()
         logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Game over")
+        logger.info(f"[{self._type.upper()}] Игра оконченна")
     
 
     def getMessagesUpdate(self):
-        messages = utils.unMarshal(self.sock.recv(1024).decode())
-        logger.debug(messages)
-        for message in messages:
-            if message.get("user"):
-                _id = message["user"]["id"]
-                return _id
+        try:
+            messages = utils.unMarshal(self.sock.recv(1024).decode())
+            logger.debug(messages)
+            for message in messages:
+                if message.get("user"):
+                    _id = message["user"]["id"]
+                    return _id
+        except UnicodeDecodeError:
+            print(colored('LOGS: [ВАЖНО] Не смог обновить данные. (не обращайте внимания)', 'red'))
+
         return ""
     
 
@@ -266,7 +272,7 @@ class DurakClient:
         for _ in range(2):
             data = self.sock.recv(4096).decode()
             logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Accepted friend")
+        logger.info(f"[{self._type.upper()}] Принял в друзья")
     
 
     def getInvites(self):
@@ -277,6 +283,7 @@ class DurakClient:
             return gameId
         return ""
     
+
 
     def join(self, _id, pwd):
         self.sock.sendall(
@@ -291,9 +298,9 @@ class DurakClient:
         for _ in range(2):
             data = self.sock.recv(4096).decode()
             logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Joined the game")
-    
-
+        logger.info(f"[{self._type.upper()}] Вошел в игру")
+        
+        
     def leave(self, _id):
         self.sock.sendall(
             utils.marshal(
@@ -310,10 +317,8 @@ class DurakClient:
                 if isinstance(i, dict): 
                     if i.get("k") == "points":
                         points = i["v"]
-        logger.info(f"[{self._type.upper()}] Leaved the game(points={points})")
-
-    
-
+        logger.info(f"[{self._type.upper()}] ДЕНЕГ: {points}")
+        
     def deleteFriend(self, _id):
         self.sock.sendall(
             utils.marshal(
@@ -326,26 +331,8 @@ class DurakClient:
         for _ in range(3):
             data = self.sock.recv(4096).decode()
             logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Friend has been deleted")
-
-    
-    def turn(self):
-        card = random.choice(self.cards)
-        self.sock.sendall(
-            utils.marshal(
-                {
-                    "c": card,
-                    "command": "t"
-                }
-            ).encode()
-        )
-        for _ in range(4):
-            data = self.sock.recv(4096).decode()
-            logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Played with card "+card)
-        self.cards.remove(card)
-    
-
+        logger.info(f"[{self._type.upper()}] Друг был удалён")
+        
     def waitingFor(self):
         while True:
             messages = utils.unMarshal(self.sock.recv(4096).decode())
@@ -358,18 +345,6 @@ class DurakClient:
                 elif message.get("command") in ("mode", "end_turn", "t"):
                     return
     
-
-    def take(self):
-        self.sock.sendall(
-            utils.marshal(
-                {
-                    "command": "take"
-                }
-            ).encode()
-        )
-        data = self.sock.recv(4096).decode()
-        logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Taken the card")
     
 
     def _pass(self):
@@ -383,4 +358,162 @@ class DurakClient:
         for _ in range(2):
             data = self.sock.recv(4096).decode()
             logger.debug(data)
-        logger.info(f"[{self._type.upper()}] Done")
+        logger.info(f"[{self._type.upper()}] Пас")
+        
+        #=============================================[2]===============================================================#
+    def join2(self, _id3, pwd):
+        self.sock.sendall(
+            utils.marshal(
+                {
+                    "password": pwd,
+                    "id": _id3,
+                    "command": "join"
+                }
+            ).encode()
+        )
+        for _ in range(2):
+            data = self.sock.recv(4096).decode()
+            logger.debug(data)
+        logger.info(f"[{self._type.upper()}] Вошел в игру")        
+
+
+        
+    def leave2(self, _id3):
+        self.sock.sendall(
+            utils.marshal(
+                {
+                    "id": _id3,
+                    "command": "leave"
+                }
+            ).encode()
+        )
+        for _ in range(3):
+            data = utils.unMarshal(self.sock.recv(4096).decode())
+            logger.debug(data)
+            for i in data:
+                if isinstance(i, dict): 
+                    if i.get("k") == "points":
+                        points = i["v"]
+        logger.info(f"[{self._type.upper()}] ДЕНЕГ: {points}")
+    
+
+
+    
+    def deleteFriend2(self, _id2):
+        self.sock.sendall(
+            utils.marshal(
+                {
+                    "id": _id2,
+                    "command": "friend_delete"
+                }
+            ).encode()
+        )
+        for _ in range(3):
+            data = self.sock.recv(4096).decode()
+            logger.debug(data)
+        logger.info(f"[{self._type.upper()}] Друг был удалён")
+        
+    def createGame2(self) -> int:
+        pwd = str(random.randint(1000, 9999))
+        self.sock.sendall(
+            utils.marshal(
+                {
+                    "sw": False,
+                    "bet": config.bet2,
+                    "deck": 24,
+                    "password": pwd,
+                    "players": 2,
+                    "fast": False,
+                    "ch": False,
+                    "nb": True,
+                    "command": "create"
+                }
+            ).encode()
+        )
+        for _ in range(2):
+            data = self.sock.recv(4096).decode()
+            logger.debug(data)
+        logger.info(f"[{self._type.upper()}] Доп. игра была создана")
+        return pwd
+        
+        #=============================================[3]===============================================================#
+        
+    def join3(self, _id5, pwd):
+        self.sock.sendall(
+            utils.marshal(
+                {
+                    "password": pwd,
+                    "id": _id5,
+                    "command": "join"
+                }
+            ).encode()
+        )
+        for _ in range(2):
+            data = self.sock.recv(4096).decode()
+            logger.debug(data)
+        logger.info(f"[{self._type.upper()}] Вошел в игру")        
+
+
+        
+    def leave3(self, _id5):
+        self.sock.sendall(
+            utils.marshal(
+                {
+                    "id": _id5,
+                    "command": "leave"
+                }
+            ).encode()
+        )
+        for _ in range(3):
+            data = utils.unMarshal(self.sock.recv(4096).decode())
+            logger.debug(data)
+            for i in data:
+                if isinstance(i, dict): 
+                    if i.get("k") == "points":
+                        points = i["v"]
+        logger.info(f"[{self._type.upper()}] ДЕНЕГ: {points}")
+    
+
+
+    
+    def deleteFriend3(self, _id4):
+        self.sock.sendall(
+            utils.marshal(
+                {
+                    "id": _id4,
+                    "command": "friend_delete"
+                }
+            ).encode()
+        )
+        for _ in range(3):
+            data = self.sock.recv(4096).decode()
+            logger.debug(data)
+        logger.info(f"[{self._type.upper()}] Друг был удалён")
+        
+    def createGame3(self) -> int:
+        pwd = str(random.randint(1000, 9999))
+        self.sock.sendall(
+            utils.marshal(
+                {
+                    "sw": False,
+                    "bet": config.bet3,
+                    "deck": 24,
+                    "password": pwd,
+                    "players": 2,
+                    "fast": False,
+                    "ch": False,
+                    "nb": True,
+                    "command": "create"
+                }
+            ).encode()
+        )
+        for _ in range(2):
+            data = self.sock.recv(4096).decode()
+            logger.debug(data)
+        logger.info(f"[{self._type.upper()}] Доп. игра была создана")
+        return pwd
+    
+
+
+
+

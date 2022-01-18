@@ -6,4 +6,7 @@ TOKEN = ''
 HUMAN_CAPTCHA_SOLVE = True
 VKTOKEN = ''
 VK_USER_ID = ''
+bet1 = 2500
+bet2 = 1000 
+bet3 = 1000
 level = 'INFO'

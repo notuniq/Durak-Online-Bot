@@ -4,7 +4,8 @@ from api import logger
 import time
 import random
 from api import servers
-import utils
+from colorama import init
+init()
 
 
 @logger.catch
@@ -13,7 +14,7 @@ def start():
     
     for _ in range(100):
         server = random.choice(servers)
-        logger.info(f"[INFO] Connected to {server[0]+':'+str(server[1])} server")
+        logger.info(f"[INFO] Присоеденился к {server[0]+':'+str(server[1])}")
         main.connect(server)
         key2 = main.getSessionKey()
         main.verifySession(key2)
@@ -45,30 +46,59 @@ def start():
         main.ready()
         bot.waitingFor()
         main.waitingFor()
-        turn = utils.whoFirst(main.cards, bot.cards, bot.trump)
         time.sleep(0.3)
-        for i in range(5):
-            if turn == "bot":
-                bot.turn()
-                main.waitingFor()
-                main.take()
-                bot.waitingFor()
-                bot._pass()
-                bot.waitingFor()
-                main.waitingFor()
-            elif turn == "main":
-                main.turn()
-                bot.waitingFor()
-                bot.take()
-                main.waitingFor()
-                main._pass()
-                main.waitingFor()
-                bot.waitingFor()
-
-
-        bot.exit()
-        time.sleep(2)
+        bot.leave(_id)
+        time.sleep(0.4)
         main.leave(_id)
         main.deleteFriend(_id1)
-
+        
+        bot.sendFriendRequest()
+        _id2 = ""
+        while not _id2:
+            _id2 = main.getMessagesUpdate()
+        time.sleep(1.5)
+        main.acceptFriendRequest(_id2)
+        time.sleep(1.5)
+        pwd = bot.createGame2()
+        bot.inviteToGame()
+        _id3 = ""
+        while not _id3:
+            _id3 = main.getInvites()
+        main.join2(_id3, pwd)
+        bot.ready()
+        main.ready()
+        bot.waitingFor()
+        main.waitingFor()
+        time.sleep(0.3)
+        bot.leave2(_id3)
+        time.sleep(0.4)
+        main.leave2(_id3)
+        main.deleteFriend2(_id2)
+        bot.exit()
+        time.sleep(1)
+        
+        bot.sendFriendRequest()
+        _id4 = ""
+        while not _id4:
+            _id4 = main.getMessagesUpdate()
+        time.sleep(1.5)
+        main.acceptFriendRequest(_id4)
+        time.sleep(1.5)
+        pwd = bot.createGame3()
+        bot.inviteToGame()
+        _id5 = ""
+        while not _id5:
+            _id5 = main.getInvites()
+        main.join3(_id5, pwd)
+        bot.ready()
+        main.ready()
+        bot.waitingFor()
+        main.waitingFor()
+        time.sleep(0.3)
+        bot.leave3(_id5)
+        time.sleep(0.4)
+        main.leave3(_id5)
+        main.deleteFriend3(_id4)
+        bot.exit()
+        time.sleep(1)
 start()
