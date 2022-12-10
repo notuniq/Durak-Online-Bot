@@ -1,5 +1,7 @@
 ### [Автор Бота](https://github.com/Numenorean)
 
+### НЕ АКТУАЛЬНО!
+
 ### Пример работы
 ![](https://i.imgur.com/K67CdSt.png)
 
